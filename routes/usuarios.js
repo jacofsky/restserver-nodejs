@@ -1,14 +1,22 @@
 const {Router} = require('express')
 const { check } = require('express-validator')
 const { usuariosGet, usuariosPut, usuariosPost, usuariosDelete, usuariosPatch } = require('../controllers/usuarios')
+const { esRoleValido, emailExiste, existeIdUsuario } = require('../helpers/db-validatos')
 const { validarCampos } = require('../middlewares/validar-campos')
-const Role = require("../models/rol")
+
 
 const router = Router()
 
+
 router.get('/', usuariosGet)
 
-router.put('/:id', usuariosPut)
+// el check funciona tanto para params como body
+router.put('/:id', [
+    check('id', "No es un ID valido").isMongoId(),
+    check('id').custom(existeIdUsuario),
+    check('rol').custom(esRoleValido),
+    validarCampos
+], usuariosPut)
 
 router.post(
     '/', 
@@ -16,19 +24,17 @@ router.post(
         check('nombre', 'El nombre es obligatorio').not().isEmpty(),
         check('password', 'El password debe tener mas de 6 letras').isLength({min: 6}),
         check('email', 'El email no es valido').isEmail(),
-        // check('rol', 'No es un rol valido').isIn(['ADMIN_ROLE', 'USER_ROLE']),
-        check('rol').custom( async(rol = '') => {
-            const existeRole = await Role.findOne({rol})
-
-            if (!existeRole) {
-                throw new Error("Rol no existente")
-            }
-        }),
+        check('email', 'El email no es valido').custom(emailExiste),
+        check('rol').custom(esRoleValido),
         validarCampos
     ], 
     usuariosPost)
 
-router.delete('/', usuariosDelete)
+router.delete('/:id', [
+    check('id', "No es un ID valido").isMongoId(),
+    check('id').custom(existeIdUsuario),
+    validarCampos
+], usuariosDelete)
 
 router.patch('/', usuariosPatch)
 

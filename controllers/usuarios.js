@@ -7,24 +7,45 @@ const Usuario = require('../models/usuario')
 // Post -> se puede sacar la data del req
 // Put -> Saco de los params la var puesta en el route
 
-const usuariosGet = (req = request, res = response) => {
+const usuariosGet = async(req = request, res = response) => {
 
-    // req.qury -> para extraer params opcionales
-    const query = req.query
+    // req.query -> para extraer params opcionales
 
-    res.status(200).json({
-        msg: 'get API',
-        query
-    })
+    const {limite = 5, desde = 0} = req.query
+    const query = {estado: true}
+
+    // Como la promesa es un array se peude desestructurar como un array
+    const [total, usuarios] = await Promise.all([
+        Usuario.countDocuments(query),
+        Usuario.find(query)
+            .skip(Number(desde))    
+            .limit(Number(limite))
+    ])
+    
+
+    res.status(200).json({total, usuarios})
 }
 
-const usuariosPut = (req, res = response) => {
+const usuariosPut = async(req, res = response) => {
 
-    const id = req.params.id
+    const {id} = req.params
+    const {_id, password, google, email, ...resto} = req.body
+
+    
+    // Validacion BD
+    if (password) {
+        // Encriptamos la password
+        const salt = bcrypt.genSaltSync()
+        resto.password = bcrypt.hashSync(password, salt)
+
+    }
+
+    const usuario = await Usuario.findByIdAndUpdate(id, resto, {new: true})
+
 
     res.status(200).json({
         msg: 'put API',
-        id
+        usuario
     })
 }
 
@@ -50,15 +71,21 @@ const usuariosPost = async(req, res = response) => {
     // Guardamos en BD
     await usuario.save()
 
-    res.status(201).json({
-        msg: 'post API',
-        usuario
-    })
+    res.status(201).json({usuario})
 }
 
-const usuariosDelete = (req, res = response) => {
+const usuariosDelete = async(req, res = response) => {
+
+    const {id} = req.params
+
+    // Borrado fisico
+    // const usuario = await Usuario.findByIdAndDelete(id)
+
+    // Cambiado de estado
+    const usuario = await Usuario.findByIdAndUpdate(id, {estado: false}, {new: true})
+
     res.status(200).json({
-        msg: 'delete API'
+        usuario
     })
 }
 

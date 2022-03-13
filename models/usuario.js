@@ -26,7 +26,8 @@ const UsuarioShema = Schema({
     rol: {
         type: String,
         required: true,
-        enum: ['ADMIN_ROLE', 'USER_ROLE']
+        // revisar aca que peude haber un error !!
+        enum: ['ADMIN_ROLE', 'USER_ROLE', 'VENTAS_ROLE']
     },
 
     estado: {
