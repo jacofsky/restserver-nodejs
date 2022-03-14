@@ -35,7 +35,7 @@
 
             const body = {id_token: response.credential}
 
-            fetch('https://restsever-cursonodejs-jaco.herokuapp.com/', {
+            fetch('https://restsever-cursonodejs-jaco.herokuapp.com/api/auth/google', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
